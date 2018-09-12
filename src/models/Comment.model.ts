@@ -1,19 +1,11 @@
 import * as Sequelize from 'sequelize';
 import { BaseModelInterface } from '../interfaces/BaseModelInterface';
-import {
-  CommentAttributes,
-  CommentInstance
-} from '../interfaces/Comment.interface';
+import { CommentAttributes, CommentInstance } from '../interfaces/Comment.interface';
 import { ModelsInterface } from '../interfaces/ModelsInterface';
 
-export interface CommentModel
-  extends BaseModelInterface,
-    Sequelize.Model<CommentInstance, CommentAttributes> {}
+export interface CommentModel extends BaseModelInterface, Sequelize.Model<CommentInstance, CommentAttributes> {}
 
-export default (
-  sequelize: Sequelize.Sequelize,
-  DataTypes: Sequelize.DataTypes
-): CommentModel => {
+export default (sequelize: Sequelize.Sequelize, DataTypes: Sequelize.DataTypes): CommentModel => {
   const Comment: CommentModel = sequelize.define(
     'Comment',
     {

@@ -7,5 +7,4 @@ export interface CommentAttributes {
   post?: number;
 }
 
-export interface CommentInstance
-  extends Sequelize.Instance<CommentAttributes> {}
+export interface CommentInstance extends Sequelize.Instance<CommentAttributes> {}

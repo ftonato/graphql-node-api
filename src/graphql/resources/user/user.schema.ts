@@ -3,6 +3,7 @@ const userTypes = `
     id: ID!
     name: String!
     email: String!
+    posts(first: Int, offset: Int): [Post!]!
   }
 
   input UserCreateInput {

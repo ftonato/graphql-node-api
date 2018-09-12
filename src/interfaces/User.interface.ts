@@ -7,8 +7,6 @@ export interface UserAttributes {
   password?: string;
 }
 
-export interface UserInstance
-  extends Sequelize.Instance<UserAttributes>,
-    UserAttributes {
+export interface UserInstance extends Sequelize.Instance<UserAttributes>, UserAttributes {
   isPassword(encodedPassword: string, password: string): boolean;
 }

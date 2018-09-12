@@ -1,16 +1,12 @@
 import { compareSync, genSaltSync, hashSync } from 'bcryptjs';
 import * as Sequelize from 'sequelize';
 import { BaseModelInterface } from '../interfaces/BaseModelInterface';
+import { ModelsInterface } from '../interfaces/ModelsInterface';
 import { UserAttributes, UserInstance } from '../interfaces/User.interface';
 
-export interface UserModel
-  extends BaseModelInterface,
-    Sequelize.Model<UserInstance, UserAttributes> {}
+export interface UserModel extends BaseModelInterface, Sequelize.Model<UserInstance, UserAttributes> {}
 
-export default (
-  sequelize: Sequelize.Sequelize,
-  DataTypes: Sequelize.DataTypes
-): UserModel => {
+export default (sequelize: Sequelize.Sequelize, DataTypes: Sequelize.DataTypes): UserModel => {
   const User: UserModel = sequelize.define(
     'User',
     {
@@ -40,29 +36,24 @@ export default (
     {
       tableName: 'users',
       hooks: {
-        beforeCreate: (
-          user: UserInstance,
-          options: Sequelize.CreateOptions
-        ): void => {
+        beforeCreate: (user: UserInstance, options: Sequelize.CreateOptions): void => {
           const salt = genSaltSync();
           user.password = hashSync(user.password, salt);
+        },
+
+        beforeUpdate: (user: UserInstance, options: Sequelize.CreateOptions): void => {
+          if (user.changed('password')) {
+            const salt = genSaltSync();
+            user.password = hashSync(user.password, salt);
+          }
         }
-        // beforeUpdate: (user: UserInstance, options: Sequelize.CreateOptions): void => {
-        //     if (user.changed('password')) {
-        //         const salt = genSaltSync();
-        //         user.password = hashSync(user.password, salt);
-        //     }
-        // }
       }
     }
   );
 
-  // User.associate = (models: ModelsInterface): void => {};
+  User.associate = (models: ModelsInterface): void => {};
 
-  User.prototype.isPassword = (
-    encodedPassword: string,
-    password: string
-  ): boolean => {
+  User.prototype.isPassword = (encodedPassword: string, password: string): boolean => {
     return compareSync(password, encodedPassword);
   };
 
