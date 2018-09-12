@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": null,
+    "password": null,
+    "database": "graphql_development",
+    "host": "localhost",
+    "dialect": "sqlite"
+  },
+  "test": {
+    "username": "root",
+    "password": null,
+    "database": "graphql_test",
+    "host": "localhost",
+    "dialect": "sqlite"
+  },
+  "production": {
+    "username": "root",
+    "password": null,
+    "database": "graphql_production",
+    "host": "localhost",
+    "dialect": "sqlite"
+  }
+}
