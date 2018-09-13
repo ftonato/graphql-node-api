@@ -4,7 +4,7 @@ const postTypes = `
     title: String!
     content: String!
     author: User!
-    comments: [Comment!]!
+    comments: (first: Int, offset: Int): [Comment!]!
   }
 
   input PostCreateInput {

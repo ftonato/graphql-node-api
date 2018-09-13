@@ -37,3 +37,11 @@ function getError(error: NodeJS.ErrnoException, bind: string): void {
 
   throw error;
 }
+export const handleError = (error: Error) => {
+  let errorMessage: string = `${error.name}: ${error.message}`;
+  let env: string = process.env.NODE_ENV;
+  if (env !== 'test' && env !== 'pipelines') {
+    console.log(errorMessage);
+  }
+  return Promise.reject(new Error(errorMessage));
+};
