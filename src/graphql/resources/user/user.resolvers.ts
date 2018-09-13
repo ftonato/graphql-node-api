@@ -62,9 +62,21 @@ export const userResolvers = {
         .catch(handleError);
     },
     updateUserPassword: (parent, { id, input }, { db }: { db: DbConnection }, info: GraphQLResolveInfo) => {
-      this.updateUser(parent, { id, input }, { db }, info).then((user: UserInstance) => {
-        return !!user;
-      });
+      id = parseInt(id);
+
+      return db.sequelize
+        .transaction((transaction: Transaction) => {
+          return db.User.findById(id).then((user: UserInstance) => {
+            if (!user) {
+              throw new Error(`User with ID ${id} not found!`);
+            }
+
+            return user.update(input, { transaction }).then((user: UserInstance) => {
+              return !!user;
+            });
+          });
+        })
+        .catch(handleError);
     },
     deleteUser: (parent, { id }, { db }: { db: DbConnection }, info: GraphQLResolveInfo) => {
       id = parseInt(id);
