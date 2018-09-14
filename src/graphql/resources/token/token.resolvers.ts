@@ -8,12 +8,11 @@ export const tokenResolvers = {
     createToken: (parent, { email, password }, { db }: { db: DbConnection }) => {
       return db.User.findOne({
         where: {
-          email,
-          password
+          email
         },
         attributes: ['id', 'password']
       }).then((user: UserInstance) => {
-        if (!!user || !user.isPassword(user.get('password'), password)) {
+        if (!user || !user.isPassword(user.get('password'), password)) {
           throw new Error('Unauthorized, wrong email or password!');
         }
 

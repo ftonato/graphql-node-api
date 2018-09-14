@@ -10,7 +10,6 @@ const postTypes = `
   input PostCreateInput {
     title: String!
     content: String!
-    author: Int!
   }
 `;
 

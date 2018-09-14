@@ -1,8 +1,11 @@
 import { GraphQLResolveInfo } from 'graphql';
 import { Transaction } from 'sequelize';
+import { AuthUser } from '../../../interfaces/AuthUserInterface';
 import { DbConnection } from '../../../interfaces/DbConnection.interface';
 import { PostInstance } from '../../../interfaces/Post.interface';
-import { handleError } from '../../../utils/utils';
+import { handleError, throwError } from '../../../utils/utils';
+import { authResolvers } from '../../composable/auth.resolver';
+import { compose } from '../../composable/composable.resolver';
 
 export const postResolvers = {
   Post: {
@@ -34,9 +37,7 @@ export const postResolvers = {
 
       return db.Post.findById(id)
         .then((post: PostInstance) => {
-          if (!post) {
-            throw new Error(`Post with ID ${id} not found!`);
-          }
+          throwError(!post, `Post with ID ${id} not found!`);
           return post;
         })
         .catch(handleError);
@@ -44,45 +45,50 @@ export const postResolvers = {
   },
 
   Mutation: {
-    createPost: (parent, { input }, { db }: { db: DbConnection }, info: GraphQLResolveInfo) => {
-      return db.sequelize
-        .transaction((transaction: Transaction) => {
-          return db.Post.create(input, { transaction });
-        })
-        .catch(handleError);
-    },
+    createPost: compose(...authResolvers)(
+      (parent, { input }, { db, authUser }: { db: DbConnection; authUser: AuthUser }, info: GraphQLResolveInfo) => {
+        input.author = authUser.id;
 
-    updatePost: (parent, { id, input }, { db }: { db: DbConnection }, info: GraphQLResolveInfo) => {
-      id = parseInt(id);
+        return db.sequelize
+          .transaction((transaction: Transaction) => {
+            return db.Post.create(input, { transaction });
+          })
+          .catch(handleError);
+      }
+    ),
 
-      return db.sequelize
-        .transaction((transaction: Transaction) => {
-          return db.Post.findById(id).then((post: PostInstance) => {
-            if (!post) {
-              throw new Error(`Post with ID ${id} not found!`);
-            }
+    updatePost: compose(...authResolvers)(
+      (parent, { id, input }, { db, authUser }: { db: DbConnection; authUser: AuthUser }, info: GraphQLResolveInfo) => {
+        id = parseInt(id);
 
-            return post.update(input, { transaction });
-          });
-        })
-        .catch(handleError);
-    },
-    deletePost: (parent, { id }, { db }: { db: DbConnection }, info: GraphQLResolveInfo) => {
-      id = parseInt(id);
+        return db.sequelize
+          .transaction((transaction: Transaction) => {
+            return db.Post.findById(id).then((post: PostInstance) => {
+              throwError(!post, `Post with ID ${id} not found!`);
+              throwError(post.get('author') != authUser.id, 'Unauthorized! You can edit posts by yourself!');
 
-      return db.sequelize
-        .transaction((transaction: Transaction) => {
-          return db.Post.findById(id).then((post: PostInstance) => {
-            if (!post) {
-              throw new Error(`Post with ID ${id} not found!`);
-            }
-
-            return post.destroy({ transaction }).then(post => {
-              return !!post;
+              input.author = authUser.id;
+              return post.update(input, { transaction });
             });
-          });
-        })
-        .catch(handleError);
-    }
+          })
+          .catch(handleError);
+      }
+    ),
+    deletePost: compose(...authResolvers)(
+      (parent, { id }, { db, authUser }: { db: DbConnection; authUser: AuthUser }, info: GraphQLResolveInfo) => {
+        id = parseInt(id);
+
+        return db.sequelize
+          .transaction((transaction: Transaction) => {
+            return db.Post.findById(id).then((post: PostInstance) => {
+              throwError(!post, `Post with ID ${id} not found!`);
+              throwError(post.get('author') != authUser.id, 'Unauthorized! You can delete posts by yourself!');
+
+              return post.destroy({ transaction }).then(post => !!post);
+            });
+          })
+          .catch(handleError);
+      }
+    )
   }
 };
