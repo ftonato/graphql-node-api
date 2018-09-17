@@ -7,11 +7,12 @@
     "dialect": "sqlite"
   },
   "test": {
-    "username": "root",
+    "username": null,
     "password": null,
     "database": "graphql_test",
     "host": "localhost",
-    "dialect": "sqlite"
+    "dialect": "sqlite",
+    "logging": false
   },
   "production": {
     "username": "root",
