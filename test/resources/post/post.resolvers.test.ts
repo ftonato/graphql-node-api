@@ -47,6 +47,12 @@ describe('Post', () => {
       })
       .then((posts: PostInstance[]) => {
         postID = posts[0].get('id');
+
+        return db.Comment.create({
+          comment: 'Hello post',
+          post: posts[1].get('id'),
+          user: userID
+        });
       });
   });
 
@@ -76,6 +82,38 @@ describe('Post', () => {
               expect(postsList[0]).to.not.have.keys(['id', 'author', 'comments']);
               expect(postsList[0]).to.have.keys(['title', 'content']);
               expect(postsList[0].title).to.equal('First post');
+            })
+            .catch(handleError);
+        });
+
+        it("should return a list of Posts with Comment's", () => {
+          const body = {
+            query: `query {
+              posts {
+                title
+                content
+                comments {
+                  comment
+                }
+              }
+            }`
+          };
+
+          return chai
+            .request(app)
+            .post('/graphql')
+            .set('content-type', 'application/json')
+            .send(JSON.stringify(body))
+            .then(response => {
+              const postsList = response.body.data.posts;
+
+              expect(response.body.data).to.be.an('object');
+              expect(postsList).to.be.an('array');
+              expect(postsList[0]).to.not.have.keys(['id', 'author']);
+              expect(postsList[0]).to.have.keys(['title', 'content', 'comments']);
+              expect(postsList[0].title).to.equal('First post');
+              expect(postsList[1].comments).to.be.an('array');
+              expect(postsList[1].comments[0].comment).to.equal('Hello post');
             })
             .catch(handleError);
         });

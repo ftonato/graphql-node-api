@@ -69,6 +69,35 @@ describe('User', () => {
             .catch(handleError);
         });
 
+        it("should return a list of Users with Post's", () => {
+          const body = {
+            query: `query {
+              users {
+                name
+                email
+                posts {
+                  title
+                }
+              }
+            }`
+          };
+
+          return chai
+            .request(app)
+            .post('/graphql')
+            .set('content-type', 'application/json')
+            .send(JSON.stringify(body))
+            .then(response => {
+              const usersList = response.body.data.users;
+
+              expect(response.body.data).to.be.an('object');
+              expect(usersList).to.be.an('array');
+              expect(usersList[0]).to.not.have.key('id');
+              expect(usersList[0]).to.have.keys(['name', 'email', 'posts']);
+            })
+            .catch(handleError);
+        });
+
         it('should paginate a list of Users', () => {
           const body = {
             query: `query getUsersList($first: Int, $offset: Int) {
@@ -185,6 +214,33 @@ describe('User', () => {
               expect(response.body.errors).to.be.an('array');
               expect(response.body).to.have.keys(['data', 'errors']);
               expect(response.body.errors[0].message).to.equal('Error: User with ID 0 not found!');
+            })
+            .catch(handleError);
+        });
+      });
+
+      describe('currentUser', () => {
+        it('should return the User owner of the token', () => {
+          const body = {
+            query: `query {
+              currentUser {
+                name
+              }
+            }`
+          };
+
+          return chai
+            .request(app)
+            .post('/graphql')
+            .set('content-type', 'application/json')
+            .set('authorization', `Bearer ${token}`)
+            .send(JSON.stringify(body))
+            .then(response => {
+              const currentUser = response.body.data.currentUser;
+
+              expect(currentUser).to.be.an('object');
+              expect(currentUser).to.have.key('name');
+              expect(currentUser.name).to.equal('Petter');
             })
             .catch(handleError);
         });
@@ -344,6 +400,27 @@ describe('User', () => {
               const deletedUser = response.body.data.deleteUser;
 
               expect(deletedUser).to.be.true;
+            })
+            .catch(handleError);
+        });
+
+        it('should block operation if token is not provided', () => {
+          const body = {
+            query: `mutation {
+              deleteUser
+            }`
+          };
+
+          return chai
+            .request(app)
+            .post('/graphql')
+            .set('content-type', 'application/json')
+            .send(JSON.stringify(body))
+            .then(response => {
+              expect(response.body.data.deleteUser).to.be.null;
+              expect(response.body).to.have.keys(['data', 'errors']);
+              expect(response.body.errors).to.have.an('array');
+              expect(response.body.errors[0].message).to.equal('Unauthorized! Token not provided!');
             })
             .catch(handleError);
         });
