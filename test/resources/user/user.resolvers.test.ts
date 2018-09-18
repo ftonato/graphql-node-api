@@ -1,9 +1,12 @@
+import * as jwt from 'jsonwebtoken';
 import { beforeEach, it } from 'mocha';
 import { UserInstance } from '../../../src/interfaces/User.interface';
+import { JWT_SECRET } from '../../../src/utils/utils';
 import { app, chai, db, expect, handleError } from './../../test-utils';
 
 describe('User', () => {
   let userID: number;
+  let token: string;
 
   beforeEach(() => {
     return db.Comment.destroy({ where: {} })
@@ -30,6 +33,9 @@ describe('User', () => {
           }
         ]).then((users: UserInstance[]) => {
           userID = users[0].get('id');
+
+          const payload = { sub: userID };
+          token = jwt.sign(payload, JWT_SECRET);
         });
       });
   });
@@ -179,6 +185,165 @@ describe('User', () => {
               expect(response.body.errors).to.be.an('array');
               expect(response.body).to.have.keys(['data', 'errors']);
               expect(response.body.errors[0].message).to.equal('Error: User with ID 0 not found!');
+            })
+            .catch(handleError);
+        });
+      });
+    });
+  });
+
+  describe('Mutations', () => {
+    describe('application/json', () => {
+      describe('createUser', () => {
+        it('should create new User', () => {
+          const body = {
+            query: `mutation createNewUser($input: UserCreateInput!) {
+              createUser(input: $input) {
+                id
+                name
+                email
+              }
+            }`,
+            variables: {
+              input: {
+                name: 'Rex',
+                email: 'rex@rex.com',
+                password: '12345'
+              }
+            }
+          };
+
+          return chai
+            .request(app)
+            .post('/graphql')
+            .set('content-type', 'application/json')
+            .send(JSON.stringify(body))
+            .then(response => {
+              const createdUser = response.body.data.createUser;
+
+              expect(createdUser).to.be.an('object');
+              expect(createdUser.name).to.equal('Rex');
+              expect(createdUser.email).to.equal('rex@rex.com');
+              expect(parseInt(createdUser.id)).to.be.a('number');
+            })
+            .catch(handleError);
+        });
+      });
+
+      describe('updateUser', () => {
+        it('should update an existing User', () => {
+          const body = {
+            query: `mutation updateExistingUser($input: UserUpdateInput!) {
+              updateUser(input: $input) {
+                name
+                email
+              }
+            }`,
+            variables: {
+              input: {
+                name: 'Lord',
+                email: 'lord@zeus.io'
+              }
+            }
+          };
+
+          return chai
+            .request(app)
+            .post('/graphql')
+            .set('content-type', 'application/json')
+            .set('authorization', `Bearer ${token}`)
+            .send(JSON.stringify(body))
+            .then(response => {
+              const updatedUser = response.body.data.updateUser;
+
+              expect(updatedUser).to.be.an('object');
+              expect(updatedUser.name).to.equal('Lord');
+              expect(updatedUser.email).to.equal('lord@zeus.io');
+              expect(updatedUser.id).to.be.undefined;
+            })
+            .catch(handleError);
+        });
+
+        it('should block operation if token is invalid', () => {
+          const body = {
+            query: `mutation createExistingUser($input: UserUpdateInput!) {
+              updateUser(input: $input) {
+                name
+                email
+              }
+            }`,
+            variables: {
+              input: {
+                name: 'Lord',
+                email: 'lord@zeus.io'
+              }
+            }
+          };
+
+          return chai
+            .request(app)
+            .post('/graphql')
+            .set('content-type', 'application/json')
+            .set('authorization', 'Bearer INVALID_TOKEN')
+            .send(JSON.stringify(body))
+            .then(response => {
+              const invalidToken = response.body.data.updateUser;
+
+              expect(invalidToken).to.be.null;
+              expect(response.body).to.have.keys(['data', 'errors']);
+              expect(response.body.errors).to.have.an('array');
+              expect(response.body.errors[0].message).to.equal('JsonWebTokenError: jwt malformed');
+            })
+            .catch(handleError);
+        });
+      });
+
+      describe('updateUser', () => {
+        it('should update the password of an existing User', () => {
+          const body = {
+            query: `mutation updatedPasswordExistingUser($input: UserUpdatePasswordInput!) {
+              updateUserPassword(input: $input)
+            }`,
+            variables: {
+              input: {
+                password: 'lord123'
+              }
+            }
+          };
+
+          return chai
+            .request(app)
+            .post('/graphql')
+            .set('content-type', 'application/json')
+            .set('authorization', `Bearer ${token}`)
+            .send(JSON.stringify(body))
+            .then(response => {
+              const updatedUserPassword = response.body.data.updateUserPassword;
+
+              expect(updatedUserPassword).to.be.true;
+            })
+            .catch(handleError);
+        });
+      });
+
+      describe('deleteUser', () => {
+        it('should delete an existing User', () => {
+          const body = {
+            query: `mutation {
+              deleteUser
+            }`
+          };
+
+          return chai
+            .request(app)
+            .post('/graphql')
+            .set('content-type', 'application/json')
+            .set('authorization', `Bearer ${token}`)
+            .send(JSON.stringify(body))
+            .then(response => {
+              const deletedUser = response.body.data.deleteUser;
+
+              expect(deletedUser).to.be.true;
             })
             .catch(handleError);
         });
