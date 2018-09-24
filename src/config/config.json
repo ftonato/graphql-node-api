@@ -15,10 +15,18 @@
     "logging": false
   },
   "production": {
-    "username": "root",
+    "username": null,
     "password": null,
     "database": "graphql_production",
     "host": "localhost",
     "dialect": "sqlite"
+  },
+  "pipelines": {
+    "username": null,
+    "password": null,
+    "database": "graphql_pipelines",
+    "host": "localhost",
+    "dialect": "sqlite",
+    "logging": false
   }
 }

@@ -6,11 +6,12 @@
   "scripts": {
     "dev": "NODE_ENV=development JWT_SECRET=passw$rd ./node_modules/.bin/nodemon --delay 5 dist/index",
     "gulp": "./node_modules/.bin/gulp",
-    "build": "npm run gulp",
-    "clusters": "NODE_ENV=development port=8080 node dist/clusters",
+    "build": "npm run gulp build",
+    "clusters": "NODE_ENV=production port=8080 node dist/clusters",
     "start": "npm run build && npm run clusters",
     "test": "NODE_ENV=test JWT_SECRET=test-passw$rd mocha",
-    "coverage": "nyc --extension .ts --include 'src/**/*.ts' --reporter html npm test"
+    "coverage": "nyc --extension .ts --include 'src/**/*.ts' --reporter html npm test",
+    "pipelines": "NODE_ENV=pipelines JWT_SECRET=pipelines-passw$rd mocha"  
   },
   "keywords": [],
   "author": "",
