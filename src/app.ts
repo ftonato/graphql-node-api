@@ -26,14 +26,15 @@ class App {
   }
 
   private middleware(): void {
-
-    this.express.use(cors({
-      origin: '*',
-      methods: ['POST', 'GET'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'Accept-Enconding'],
-      preflightContinue: false,
-      optionsSuccessStatus: 204
-    }));
+    this.express.use(
+      cors({
+        origin: '*',
+        methods: ['POST', 'GET'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'Accept-Enconding'],
+        preflightContinue: false,
+        optionsSuccessStatus: 204
+      })
+    );
 
     this.express.use(compression());
 
